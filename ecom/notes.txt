@@ -1,0 +1,4 @@
+source ecom_venv/bin/activate
+
+admin
+password
