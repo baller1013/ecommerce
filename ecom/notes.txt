@@ -2,3 +2,8 @@ source ecom_venv/bin/activate
 
 admin
 password
+
+create new app 
+python manage.py startapp "name"
+
+Video 11 Shopping cart setup
