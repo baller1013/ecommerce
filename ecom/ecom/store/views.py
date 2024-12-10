@@ -1,11 +1,79 @@
 from django.shortcuts import render, redirect
-from .models import Product, Category
+from .models import Product, Category, Profile
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
-from .forms import SignUpForm
+from .forms import SignUpForm, UpdateUserForm, ChangePasswordForm, UserInfoForm
 from django import forms 
+
+
+def search(request):
+    #determine if they fill out the form
+    if request.method == "POST":
+        searched = request.POST['searched']
+        return render(request, 'search.html', {"searched":searched})
+    else:
+        return render(request, 'search.html', {})
+
+
+def update_info(request):
+    if request.user.is_authenticated:
+        current_user = Profile.objects.get(user__id=request.user.id)
+        form = UserInfoForm(request.POST or None, instance=current_user)
+
+        if form.is_valid():
+            form.save()
+            messages.success(request, "User information has been updated!")
+            return redirect('home')
+        return render(request, 'update_info.html', {"form": form})
+    else:
+        messages.success(request, "You must be logged in in order to update your profile.")
+        return redirect('home')
+    
+
+def update_password(request):
+    if request.user.is_authenticated:
+        current_user = request.user
+        #did they fill out the form
+        if request.method == 'POST':
+            #do stuff
+            form = ChangePasswordForm(current_user, request.POST)
+            #is form valid
+            if form.is_valid():
+                form.save()
+                messages.success(request, "Your password has been updated!")
+                login(request, current_user)
+                return redirect('update_user')
+            else:
+                for error in list(form.errors.values()):
+                    messages.error(request, error)
+                    return redirect('update_password')
+        else:
+            form = ChangePasswordForm(current_user)
+            return render(request, 'update_password.html', {"form": form})
+    else:
+        messages.success(request, "You must be logged in!")
+
+def update_user(request):
+    if request.user.is_authenticated:
+        current_user = User.objects.get(id=request.user.id)
+        user_form = UpdateUserForm(request.POST or None, instance=current_user)
+
+        if user_form.is_valid():
+            user_form.save()
+            login(request, current_user)
+            messages.success(request, "User has been updated!")
+            return redirect('home')
+        return render(request, 'update_user.html', {"user_form": user_form})
+    else:
+        messages.success(request, "You must be logged in in order to update your profile.")
+        return redirect('home')
+    
+
+def category_summary(request):
+    categories = Category.objects.all()
+    return render(request, 'category_summary.html', {"categories":categories})
 
 def category(request, foo):
     foo = foo.replace('-', ' ')
@@ -60,8 +128,9 @@ def register_user(request):
 
             user = authenticate(username=username, password=password)
             login(request, user)
-            messages.success(request, ("You have been successfully registered!"))
-            return redirect('home')
+            
+            messages.success(request, ("You have been successfully registered! Please fill out your user information."))
+            return redirect('update_info')
          else:
             messages.success(request, ("There was a problem!"))
             return redirect('register')

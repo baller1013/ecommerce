@@ -7,7 +7,9 @@ from django.contrib import messages
 def cart_summary(request):
     cart = Cart(request)
     cart_products = cart.get_prods
-    return render(request, "cart_summary.html", {"cart_products": cart_products})
+    quantities = cart.get_quants 
+    totals = cart.cart_total()
+    return render(request, "cart_summary.html", {"cart_products": cart_products, "quantities": quantities, "totals": totals})
 
 def cart_add(request):
 	# Get the cart
@@ -15,8 +17,8 @@ def cart_add(request):
 	# test for POST
 	if request.POST.get('action') == 'post':
 		# Get stuff
-		product_id = str(request.POST.get('product_id'))
-		product_qty = str(request.POST.get('product_qty'))
+		product_id = int(request.POST.get('product_id'))
+		product_qty = int(request.POST.get('product_qty'))
 
 		# lookup product in DB
 		product = get_object_or_404(Product, id=product_id)
@@ -34,7 +36,26 @@ def cart_add(request):
 		return response
 
 def cart_delete(request) :
-    pass
+    cart = Cart(request)
+    if request.POST.get('action') == 'post':
+		# Get stuff
+        product_id = int(request.POST.get('product_id'))
+        #call delete function
+        cart.delete(product=product_id)
+        response = JsonResponse({'product':product_id})
+        messages.success(request, ("Item deleted from cart ..."))
+        return response 
 
 def cart_update(request):
-    pass
+    cart = Cart(request)
+    if request.POST.get('action') == 'post':
+		# Get stuff
+        product_id = int(request.POST.get('product_id'))
+        product_qty = int(request.POST.get('product_qty'))
+
+        cart.update(product=product_id, quantity=product_qty)
+
+        response = JsonResponse({'qty':product_qty})
+        messages.success(request, ("Cart has been updated..."))
+        return response 
+        # return redirect('cart_summary')

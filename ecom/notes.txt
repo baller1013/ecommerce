@@ -1,9 +1,9 @@
 source ecom_venv/bin/activate
 
 admin
-password
+password#1
 
 create new app 
 python manage.py startapp "name"
 
-Video 11 Shopping cart setup
+Video 22 User Profile Update
