@@ -6,6 +6,79 @@ from payment.models import ShippingAddress, Order, OrderItem
 from django.contrib.auth.models import User
 from django.contrib import messages
 
+from store.models import Product, Profile
+import datetime 
+
+def orders(request, pk):
+	if request.user.is_authenticated and request.user.is_superuser:
+		# get the order
+		order = Order.objects.get(id=pk)
+		#get the order items
+		items = OrderItem.objects.filter(order=pk)
+
+		if request.POST:
+			status = request.POST['shipping_status']
+			#check if true or false
+			if status == "true":
+				order = Order.objects.filter(id=pk)
+				#update the status 
+				now = datetime.datetime.now()
+				order.update(shipped=True, date_shipped=now)
+			else: 
+				order = Order.objects.filter(id=pk)
+				#update the status 
+				order.update(shipped=False)
+			messages.success(request, "Shipping Status Updated")
+			return redirect('not_shipped_dash')
+
+		return render(request, 'payment/orders.html', {"order":order, "items":items})
+	
+	else:
+		messages.success(request,"Access Denied" )
+		return redirect('home')
+	
+def not_shipped_dash(request):
+	if request.user.is_authenticated and request.user.is_superuser:
+		orders = Order.objects.filter(shipped=False)
+		if request.POST:
+			status = request.POST['shipping_status']
+			num = request.POST['num']
+			#get the order
+			order = Order.objects.filter(id=num)
+			#grab date and time 
+			now = datetime.datetime.now()
+			#update order
+			order.update(shipped=True, date_shipped=now)
+			#redirect
+			messages.success(request, "Shipping Status Updated")
+			return redirect('not_shipped_dash')
+
+		return render(request, "payment/not_shipped_dash.html", {"orders": orders})
+	else:
+		messages.success(request,"Access Denied" )
+		return redirect('home')
+
+def shipped_dash(request):
+	if request.user.is_authenticated and request.user.is_superuser:
+		orders = Order.objects.filter(shipped=True)
+		if request.POST:
+			status = request.POST['shipping_status']
+			num = request.POST['num']
+			#get the order
+			order = Order.objects.filter(id=num)
+			#grab date an dtime 
+			now = datetime.datetime.now()
+			#update order
+			order.update(shipped=False)
+			#redirect
+			messages.success(request, "Shipping Status Updated")
+			return redirect('not_shipped_dash')
+		return render(request, "payment/shipped_dash.html", {"orders": orders})
+	
+	else:
+		messages.success(request,"Access Denied" )
+		return redirect('home')
+
 def process_order(request):
 	if request.POST:
 		#get the cart 
@@ -29,12 +102,40 @@ def process_order(request):
 		shipping_address = f"{my_shipping['shipping_address1']}\n{my_shipping['shipping_address2']}\n{my_shipping['shipping_city']}\n{my_shipping['shipping_state']}\n{my_shipping['shipping_zipcode']}\n{my_shipping['shipping_country']}\n"
 		amount_paid = totals 
 		
+		# create an order
 		if request.user.is_authenticated:
 			#logged in
 			user = request.user
 			#create order
 			create_order = Order(user=user, full_name=full_name,email=email, shipping_address=shipping_address, amount_paid=amount_paid)
 			create_order.save()
+
+			#add order items
+			#get the order id
+			order_id = create_order.pk 
+			#get product information
+			for product in cart_products():
+				product_id = product.id 
+				#get price
+				if product.is_sale:
+					price = product.sale_price
+				else:
+					price = product.price
+				#get quantity
+				for key, value in quantities().items():
+					if int(key) == product.id:
+						#create an order item
+						create_order_item = OrderItem(order_id=order_id, product_id=product_id, user=user, quantity=value, price=price)
+						create_order_item.save()
+			#delete our cart
+			for key in list(request.session.keys()):
+				if key == "session_key":
+					#delete the key
+					del request.session[key]
+			
+			#delete cart from database (old cart field)
+			current_user = Profile.objects.filter(user__id=request.user.id)
+			current_user.update(old_cart="")
 
 			messages.success(request,"Order Placed" )
 			return redirect('home')
@@ -44,6 +145,29 @@ def process_order(request):
 			#create order
 			create_order = Order(full_name=full_name,email=email, shipping_address=shipping_address, amount_paid=amount_paid)
 			create_order.save() 
+
+			#add order items
+			#get the order id
+			order_id = create_order.pk 
+			#get product information
+			for product in cart_products():
+				product_id = product.id 
+				#get price
+				if product.is_sale:
+					price = product.sale_price
+				else:
+					price = product.price
+				#get quantity
+				for key, value in quantities().items():
+					if int(key) == product.id:
+						#create an order item
+						create_order_item = OrderItem(order_id=order_id, product_id=product_id, quantity=value, price=price)
+						create_order_item.save()
+
+			for key in list(request.session.keys()):
+				if key == "session_key":
+					#delete the key
+					del request.session[key]
 
 			messages.success(request,"Order Placed" )
 			return redirect('home')
