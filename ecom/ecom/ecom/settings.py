@@ -19,7 +19,7 @@ SECRET_KEY = "django-insecure-_0$w!i(c(m%j&3rjv)^)n_g8ck1xebj$o2mys1k)=)crin$^9@
 DEBUG = True
 
 ALLOWED_HOSTS = []
-
+CSRF_TRUSTED_ORIGINS = []
 
 # Application definition
 
@@ -32,7 +32,8 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "store",
     "cart",
-    "payment",  
+    "payment",
+    "whitenoise.runserver_nostatic",  
 ]
 
 MIDDLEWARE = [
@@ -43,6 +44,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
 ]
 
 ROOT_URLCONF = "ecom.urls"
@@ -123,6 +125,10 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATICFILES_DIRS = ['static/']
+
+#whitenoise static stuff
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 MEDIA_URL = 'media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
