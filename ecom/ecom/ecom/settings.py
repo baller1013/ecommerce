@@ -83,6 +83,7 @@ DATABASES = {
         'NAME': 'railway' ,
         'USER': 'postgres',
         'PASSWORD': os.environ['DB_PASSWORD_YO'],
+        # 'HOST': 'postgres.railway.internal'
         'HOST': 'junction.proxy.rlwy.net',
         'PORT': '35711' ,
 
@@ -129,7 +130,7 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATICFILES_DIRS = ['static/']
 
-#whitenoise static stuff
+# White noise static stuff
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
