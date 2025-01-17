@@ -207,7 +207,7 @@ def billing_info(request):
 			'currency_code': 'USD',
 			'notify_url': 'https://{}{}'.format(host, reverse("paypal-ipn")),
 			'return_url': 'https://{}{}'.format(host, reverse("payment_success")),
-			'cancel_return': 'https://{}{}'.format(host, reverse("payment_failure")),
+			'cancel_return': 'https://{}{}'.format(host, reverse("payment_failed")),
 		}
 		paypal_form = PayPalPaymentsForm(initial=paypal_dict)
 		#check to see if user is logged in
